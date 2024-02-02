@@ -1,0 +1,8 @@
+requests
+fastapi==0.99.1
+psycopg2-binary==2.9.9
+SQLAlchemy==2.0.25
+pandas
+uvicorn==0.26.0
+uvloop
+websockets

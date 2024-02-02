@@ -1,0 +1,27 @@
+version: '3.7'
+
+services:
+  feefee:
+    image: feefee
+    ports:
+      - 5000:5000
+    depends_on:
+      - db
+    volumes:
+      - ./app:/app
+
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=feefee
+    expose: 
+      - 5432
+    ports:
+      - 5432:5432
+
+volumes:
+  postgres_data:
