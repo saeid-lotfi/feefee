@@ -13,7 +13,8 @@ app = FastAPI()
 def posts():
     return {"message": "Welcome to FeeFee"}
 
-@app.get("/index_history")
+@app.get("/index_history/{type}")
 def get(db: Session = Depends(get_db)):
-    data = db.query(IndexHistory).all()
+    data = db.query(IndexHistory).filter(IndexHistory.Index_Type == 'boors').all()
     return data
+
