@@ -1,11 +1,13 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 
-from database import get_db
-from utils import init_db
-from models import *
+from database import get_db, init_db
+from sync import update_db
+from api_functions import get_overview, get_chart_data, get_assets
 
 init_db()
+
+update_db()
 
 app = FastAPI()
 
@@ -13,12 +15,17 @@ app = FastAPI()
 def posts():
     return {"message": "Welcome to FeeFee"}
 
-@app.get("/index_history/{index_type}")
-def get(index_type: str, db: Session = Depends(get_db)):
-    data = db.query(IndexHistory).filter(IndexHistory.Index_Type == index_type).all()
+@app.get("/get-overview")
+def get(db: Session = Depends(get_db)):
+    data = get_overview(db)
     return data
 
-@app.get("/fund_history/{fund_id}")
-def get(fund_id: int, db: Session = Depends(get_db)):
-    data = db.query(FundHistory).filter(FundHistory.Fund_Id == fund_id).all()
+@app.get("/get-chart-data")
+def get(db: Session = Depends(get_db), candle: str = '1M', from_time: str = '2024-01-01', to_time: str = '2024-02-01'):
+    data = get_chart_data(db, candle, from_time, to_time)
+    return data
+
+@app.get("/get-assets")
+def get(db: Session = Depends(get_db)):
+    data = get_assets(db)
     return data

@@ -4,25 +4,11 @@ import datetime as dt
 import time
 
 from database import engine
-from models import Base
 import logging
 logging.getLogger().setLevel(logging.INFO)
 
-
-
-def init_db():
-    
-    logging.info('Droping Existing Tables ...')
-    Base.metadata.drop_all(engine)
-    
-    logging.info('Creating Tables ...')
-    Base.metadata.create_all(engine)
-    
-    logging.info('Loading Index Data ...')
-    get_index_historic_data()
-    
-    logging.info('Loading Fund Data ...')
-    get_fund_historic_data()
+def update_db():
+    pass
 
 def get_index_historic_data():
     
