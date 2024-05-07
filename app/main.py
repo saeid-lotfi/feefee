@@ -5,10 +5,13 @@ from database import get_db, init_db
 from sync import update_db
 from api_functions import get_overview, get_chart_data, get_assets
 
+# initialize the server database
 init_db()
 
+# sync data with latest status
 update_db()
 
+# app instance
 app = FastAPI()
 
 @app.get("/")

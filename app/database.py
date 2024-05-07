@@ -21,14 +21,21 @@ def get_db():
 
 def init_db():
 
+    # get database schema
     metadata = MetaData()
     metadata.reflect(bind= engine)
-
+    
+    # check if tables exists in database
     if Base.metadata.tables.keys() == metadata.tables.keys():
-        logging.info('Tables are already created!')
+        logging.info('Schemas are already created!')
     
     else:
-        logging.info('Tables not found in database!')
+        logging.info('Schemas not match in database!')
+        logging.info(f'Database tables:{metadata.tables.keys()}')
+        logging.info(f'Model tables:{Base.metadata.tables.keys()}')
+        
+        logging.info('Dropping tables ...')
         Base.metadata.drop_all(engine)
-        logging.info('Creating Tables ...')
+        
+        logging.info('Creating tables ...')
         Base.metadata.create_all(engine)

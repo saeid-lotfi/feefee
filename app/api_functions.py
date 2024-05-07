@@ -2,25 +2,25 @@ from models import *
 
 def get_overview(db):
 
-    bourse_t_index_data = db.query(BourseHistory).filter(BourseHistory.Index_Type == 'total').all()
+    bourse_t_index_data = db.query(Bourse_Total_Index).all()
 
-    bourse_w_index_data = db.query(BourseHistory).filter(BourseHistory.Index_Type == 'weighted').all()
+    # bourse_w_index_data = db.query(BourseHistory).filter(BourseHistory.Index_Type == 'weighted').all()
 
-    gold_coin_data = db.query(GoldHistory).filter(GoldHistory.Gold_Type == 'coin-tamam').all()
+    # gold_coin_data = db.query(GoldHistory).filter(GoldHistory.Gold_Type == 'coin-tamam').all()
     
-    dollar_data = db.query(CurrencyHistory).filter(CurrencyHistory.Currency_Type == 'dollar').all()
+    # dollar_data = db.query(CurrencyHistory).filter(CurrencyHistory.Currency_Type == 'dollar').all()
 
-    bitcoin_data = db.query(CryptocurrencyHistory).filter(CryptocurrencyHistory.Crypto_Type == 'bitcoin').all()
+    # bitcoin_data = db.query(CryptocurrencyHistory).filter(CryptocurrencyHistory.Crypto_Type == 'bitcoin').all()
     
-    fund_n_risk_data = db.query(FundHistory).filter(FundHistory.Fund_Type == 'no-risk').all()
+    # fund_n_risk_data = db.query(FundHistory).filter(FundHistory.Fund_Type == 'no-risk').all()
 
     return [
-        bourse_t_index_data,
-        bourse_w_index_data,
-        gold_coin_data,
-        dollar_data,
-        bitcoin_data,
-        fund_n_risk_data
+        bourse_t_index_data
+        # bourse_w_index_data,
+        # gold_coin_data,
+        # dollar_data,
+        # bitcoin_data,
+        # fund_n_risk_data
     ]
 
 def get_chart_data(db, candle, from_time, to_time):
