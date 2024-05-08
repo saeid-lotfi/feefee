@@ -5,7 +5,7 @@ import time
 from sqlalchemy.dialects.postgresql import insert
 
 from database import get_db
-from models import BourseHistory
+from models import *
 import logging
 logging.getLogger().setLevel(logging.INFO)
 pd.set_option('future.no_silent_downcasting', True)
@@ -25,7 +25,21 @@ def get_tmc_data_by_url(url):
 
     return result
 
-####################
+def get_fund_meta_data():
+    
+    url = 'https://cdn.tsetmc.com/api/ClosingPrice/GetRelatedCompany/68'
+    data = get_tmc_data_by_url(url)
+
+    df = pd.DataFrame(data['relatedCompany'])
+    df['Fund_Id'] = df['insCode']
+    df['Fund_Name'] = df['instrument'].apply(lambda x: x['lVal18AFC'])
+    df['Fund_NameDetail'] = df['instrument'].apply(lambda x: x['lVal30'])
+    df = df[['Fund_Id', 'Fund_Name', 'Fund_NameDetail']]
+    
+    return df
+
+
+#################### tsetmc api
 def get_index_historic_data(index_type_code):
     
     url = f'https://cdn.tsetmc.com/api/Index/GetIndexB2History/{index_type_code}'
@@ -33,6 +47,15 @@ def get_index_historic_data(index_type_code):
     
     return raw_data
 
+def get_fund_historic_data(fund_id):
+
+    url = f'https://cdn.tsetmc.com/api/ClosingPrice/GetClosingPriceDailyList/{fund_id}/0'
+    raw_data = get_tmc_data_by_url(url)
+    
+    return raw_data
+
+
+#################### transform tsetmc data
 def transform_index_historic_data(raw_data, index_type, index_code):
     
     # change to dataframe
@@ -47,7 +70,7 @@ def transform_index_historic_data(raw_data, index_type, index_code):
     df['Closed_Day'] = False # available days are not closed days
     
     # remove extra data
-    df = df[['Index_Id', 'Index_Type', 'Date_En', 'Value', 'Previous_Value', 'Closed_Day']]
+    df = df[['Index_Id', 'Date_En', 'Index_Type', 'Value', 'Previous_Value', 'Closed_Day']]
 
     # build time frame and merge it with dataframe
     time_frame = pd.DataFrame({
@@ -64,6 +87,41 @@ def transform_index_historic_data(raw_data, index_type, index_code):
 
     return df
 
+def transform_fund_historic_data(raw_data, fund_name, fund_name_detail):
+
+    # change to dataframe
+    df = pd.DataFrame(raw_data['closingPriceDaily'])
+
+    # get interest data
+    df['Fund_Id'] = df['insCode']
+    df['Fund_Name'] = fund_name
+    df['Fund_NameDetail'] = fund_name_detail
+    df['Date_En'] = df['dEven'].astype(str).apply(lambda x: dt.datetime(int(x[:4]), int(x[4:6]), int(x[6:8])))
+    df['Price_Closing'] = df['pClosing']
+    df['Price_Yesterday'] = df['priceYesterday']
+    df['Closed_Day'] = False
+
+    # remove extra data
+    df = df[['Fund_Id', 'Date_En', 'Fund_Name', 'Fund_NameDetail', 'Price_Closing', 'Price_Yesterday', 'Closed_Day']]
+
+    # build time frame and merge it with dataframe
+    time_frame = pd.DataFrame({
+        'Date_En': pd.date_range(start='2022-01-01', end=dt.datetime.now()),
+        'Fund_Id': df['Fund_Id'].iloc[0]
+        })
+    df = pd.merge(time_frame, df, how= 'left')
+
+    # mark new days as closed days
+    df['Closed_Day'] = df['Closed_Day'].fillna(True)
+    # backfill null values
+    df['Fund_Name'] = df['Fund_Name'].fillna(fund_name)
+    df['Fund_NameDetail'] = df['Fund_NameDetail'].fillna(fund_name)
+    df[['Price_Closing', 'Price_Yesterday']] = df[['Price_Closing', 'Price_Yesterday']].ffill()
+
+    return df
+
+
+#################### push to db
 def insert_index_historic_data(df):
     records = df.to_dict(orient= 'records')
     stmt = insert(BourseHistory).values(records)
@@ -88,8 +146,35 @@ def insert_index_historic_data(df):
         raise e
     finally:
         db.close()
+
+def insert_fund_historic_data(df):
+    records = df.to_dict(orient= 'records')
+    stmt = insert(FundHistory).values(records)
+    stmt = stmt.on_conflict_do_update(
+    index_elements =['Fund_Id', 'Date_En'],
+    set_={
+        'Fund_Name': stmt.excluded.Fund_Name,
+        'Fund_NameDetail': stmt.excluded.Fund_NameDetail,
+        'Price_Closing': stmt.excluded.Price_Closing,
+        'Price_Yesterday': stmt.excluded.Price_Yesterday,
+        'Closed_Day': stmt.excluded.Closed_Day
+        }
+    )
+    
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        db.execute(stmt)
+        db.commit()
+    except Exception as e:
+        # Rollback the transaction in case of error
+        db.rollback()
+        raise e
+    finally:
+        db.close()
     
 
+#################### main sync
 def sync_bourse_index():
 
     index_metadata = {
@@ -107,82 +192,31 @@ def sync_bourse_index():
         logging.info(f'Inserting to db')
         insert_index_historic_data(df)
 
-####################
+def sync_fund_assets():
+
+    fund_metadata = get_fund_meta_data()
+
+    for row in fund_metadata.itertuples():
+        logging.info(f'Calling source api for fund {row.Fund_Name}')
+        raw_data = get_fund_historic_data(row.Fund_Id)
+        logging.info(f'Transforming raw data')
+        df = transform_fund_historic_data(raw_data, row.Fund_Name, row.Fund_NameDetail)
+        logging.info(f'Data sample: \n {df.head()}')
+        logging.info(f'Data sample: \n {df.tail()}')
+        logging.info(f'Inserting to db')
+        insert_fund_historic_data(df)
+        time.sleep(1)
+
 def update_db():
     
     sync_bourse_index()
 
+    sync_fund_assets()
 
 def schedule_update_db():
     logging.info("Starting background task: update_db")
     while True:
         update_db()
         logging.info("update_db executed successfully")
-        # Sleep for an hour before running again
-        time.sleep(3600)
+        time.sleep(300)
 
-
-
-
-
-
-
-
-
-
-
-# def get_fund_historic_data():
-#     df_metadata = get_fund_meta_data()
-    
-#     temp = []
-#     for row in df_metadata.itertuples():
-#         logging.info(f'Getting Fund of: {row.Fund_Name}')
-#         url = f'https://cdn.tsetmc.com/api/ClosingPrice/GetClosingPriceDailyList/{row.Fund_Id}/0'
-#         data = get_tmc_data_by_url(url)
-#         temp.append(transform_fund_data(data, row.Fund_Name, row.Fund_NameDetail))
-#         time.sleep(1)
-#     temp = pd.concat(temp)
-#     temp.to_sql(
-#         'FundHistory',
-#         con= engine,
-#         if_exists= 'append',
-#         index= False
-#     )
-
-# def get_fund_meta_data():
-    
-#     url = 'https://cdn.tsetmc.com/api/ClosingPrice/GetRelatedCompany/68'
-#     data = get_tmc_data_by_url(url)
-
-#     df = pd.DataFrame(data['relatedCompany'])
-#     df['Fund_Id'] = df['insCode']
-#     df['Fund_Name'] = df['instrument'].apply(lambda x: x['lVal18AFC'])
-#     df['Fund_NameDetail'] = df['instrument'].apply(lambda x: x['lVal30'])
-#     df = df[['Fund_Id', 'Fund_Name', 'Fund_NameDetail']]
-    
-#     return df
-
-# def transform_fund_data(data, fund_name, fund_name_detail):
-#     df = pd.DataFrame(data['closingPriceDaily'])
-
-#     df['Date_En'] = df['dEven'].astype(str).apply(lambda x: dt.datetime(int(x[:4]), int(x[4:6]), int(x[6:8])))
-#     df['Fund_Id'] = df['insCode']
-#     df['Fund_Name'] = fund_name
-#     df['Fund_NameDetail'] = fund_name_detail
-#     df['Price_Closing'] = df['pClosing']
-#     df['Price_Yesterday'] = df['priceYesterday']
-#     df = df[['Fund_Id', 'Fund_Name', 'Fund_NameDetail', 'Date_En', 'Price_Closing', 'Price_Yesterday']]
-#     df['Closed_Day'] = False
-
-#     time_frame = pd.DataFrame({
-#         'Date_En': pd.date_range(start='2022-01-01', end=dt.datetime.now()),
-#         'Fund_Id': df['Fund_Id'].iloc[0]
-#         })
-
-#     df = pd.merge(time_frame, df, how= 'left')
-#     df['Fund_Name'] = df['Fund_Name'].fillna(fund_name)
-#     df['Fund_NameDetail'] = df['Fund_NameDetail'].fillna(fund_name)
-#     df['Closed_Day'] = df['Closed_Day'].fillna(True)
-#     df[['Price_Closing', 'Price_Yesterday']] = df[['Price_Closing', 'Price_Yesterday']].ffill()
-
-#     return df

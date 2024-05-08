@@ -10,10 +10,9 @@ Base = declarative_base()
 class BourseHistory(Base):
     __tablename__ = 'BourseHistory'
 
-    # id = Column(Integer, nullable= False, autoincrement=True)
     Index_Id = Column(BigInteger, nullable= False)
-    Index_Type = Column(String, nullable= False)
     Date_En = Column(Date, nullable= False)
+    Index_Type = Column(String, nullable= False)
     Value = Column(Float, nullable= False)
     Previous_Value = Column(Float, nullable= False)
     Closed_Day = Column(Boolean, nullable= False)
@@ -26,10 +25,9 @@ class BourseHistory(Base):
 class CryptocurrencyHistory(Base):
     __tablename__ = 'CryptocurrencyHistory'
 
-    # id = Column(Integer, primary_key= True, nullable= False, autoincrement=True)
     Crypto_Id = Column(BigInteger, nullable= False)
-    Crypto_Type = Column(String, nullable= False)
     Date_En = Column(Date, nullable= False)
+    Crypto_Type = Column(String, nullable= False)
     Value = Column(Float, nullable= False)
     Previous_Value = Column(Float, nullable= False)
     Closed_Day = Column(Boolean, nullable= False)
@@ -42,10 +40,9 @@ class CryptocurrencyHistory(Base):
 class CurrencyHistory(Base):
     __tablename__ = 'CurrencyHistory'
 
-    # id = Column(Integer, primary_key= True, nullable= False, autoincrement=True)
     Currency_Id = Column(BigInteger, nullable= False)
-    Currency_Type = Column(String, nullable= False)
     Date_En = Column(Date, nullable= False)
+    Currency_Type = Column(String, nullable= False)
     Value = Column(Float, nullable= False)
     Previous_Value = Column(Float, nullable= False)
     Closed_Day = Column(Boolean, nullable= False)
@@ -58,10 +55,9 @@ class CurrencyHistory(Base):
 class GoldHistory(Base):
     __tablename__ = 'GoldHistory'
 
-    # id = Column(Integer, primary_key= True, nullable= False, autoincrement=True)
     Gold_Id = Column(BigInteger, nullable= False)
-    Gold_Type = Column(String, nullable= False)
     Date_En = Column(Date, nullable= False)
+    Gold_Type = Column(String, nullable= False)
     Value = Column(Float, nullable= False)
     Previous_Value = Column(Float, nullable= False)
     Closed_Day = Column(Boolean, nullable= False)
@@ -74,11 +70,10 @@ class GoldHistory(Base):
 class FundHistory(Base):
     __tablename__ = 'FundHistory'
 
-    # id = Column(Integer, primary_key= True, nullable= False, autoincrement=True)
     Fund_Id = Column(BigInteger, nullable= False)
+    Date_En = Column(Date, nullable= False)
     Fund_Name = Column(String, nullable= False)
     Fund_NameDetail = Column(String, nullable= False)
-    Date_En = Column(Date, nullable= False)
     Price_Closing = Column(Float, nullable= False)
     Price_Yesterday = Column(Float, nullable= False)
     Closed_Day = Column(Boolean, nullable= False)
