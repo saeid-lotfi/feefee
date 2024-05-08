@@ -2,12 +2,13 @@ import pandas as pd
 import requests
 import datetime as dt
 import time
-from sqlalchemy import insert
+from sqlalchemy.dialects.postgresql import insert
 
 from database import get_db
 from models import BourseHistory
 import logging
 logging.getLogger().setLevel(logging.INFO)
+pd.set_option('future.no_silent_downcasting', True)
 
 
 ####################
@@ -64,20 +65,29 @@ def transform_index_historic_data(raw_data, index_type, index_code):
     return df
 
 def insert_index_historic_data(df):
+    records = df.to_dict(orient= 'records')
+    stmt = insert(BourseHistory).values(records)
+    stmt = stmt.on_conflict_do_update(
+    index_elements =['Index_Id', 'Date_En'],
+    set_={
+        'Index_Type': stmt.excluded.Index_Type,
+        'Value': stmt.excluded.Value,
+        'Previous_Value': stmt.excluded.Previous_Value,
+        'Closed_Day': stmt.excluded.Closed_Day
+        }
+    )
+    
     db_gen = get_db()
     db = next(db_gen)
     try:
-        db.bulk_insert_mappings(BourseHistory, df.to_dict(orient= 'records'))
+        db.execute(stmt)
         db.commit()
-        db.close()
     except Exception as e:
         # Rollback the transaction in case of error
         db.rollback()
         raise e
     finally:
         db.close()
-    # stmt = (insert(BourseHistory), df.to_dict(orient= 'records'))   
-    # db.execute(stmt)
     
 
 def sync_bourse_index():
@@ -93,6 +103,7 @@ def sync_bourse_index():
         logging.info(f'Transforming raw data')
         df = transform_index_historic_data(raw_data, index_type, index_type_code)
         logging.info(f'Data sample: \n {df.head()}')
+        logging.info(f'Data sample: \n {df.tail()}')
         logging.info(f'Inserting to db')
         insert_index_historic_data(df)
 
