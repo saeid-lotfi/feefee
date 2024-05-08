@@ -113,7 +113,13 @@ def update_db():
     sync_bourse_index()
 
 
-
+def schedule_update_db():
+    logging.info("Starting background task: update_db")
+    while True:
+        update_db()
+        logging.info("update_db executed successfully")
+        # Sleep for an hour before running again
+        time.sleep(3600)
 
 
 

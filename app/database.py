@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import inspect, text
@@ -79,5 +79,22 @@ def init_db():
             table.create(engine)
 
     # views
-    logging.info(f'Views will be created and replaced')
+    logging.info(f'Views will be dropped ...')
+    
+    for view_name in [view.name for view in model_views]:
+        logging.info(f'Dropping view {view_name} ...')
+        db_gen = get_db()
+        db = next(db_gen)
+        try:
+            stmt = text(f'DROP VIEW IF EXISTS "public"."{view_name}" CASCADE')
+            db.execute(stmt)
+            db.commit()
+        except Exception as e:
+            # Rollback the transaction in case of error
+            db.rollback()
+            raise e    
+        finally:
+            db.close()
+        
+    logging.info(f'Views will be created again ...')
     Base.metadata.create_all(engine)

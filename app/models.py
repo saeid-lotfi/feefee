@@ -1,4 +1,4 @@
-from sqlalchemy import String, Boolean, Integer, Column, Float, BigInteger, Date, PrimaryKeyConstraint
+from sqlalchemy import String, Boolean, Column, Float, BigInteger, Date, PrimaryKeyConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import create_view
 from sqlalchemy import select, func
@@ -87,7 +87,7 @@ class FundHistory(Base):
         PrimaryKeyConstraint('Fund_Id', 'Date_En'),
     )
     is_view = False
-    
+
 
 
 ######### views
@@ -95,11 +95,12 @@ class FundHistory(Base):
 class TotalIndex_view(Base):
     stmt = select(
         BourseHistory.Index_Type,
+        BourseHistory.Date_En,
         BourseHistory.Value,
         ((BourseHistory.Value - func.lag(BourseHistory.Value).over(order_by= BourseHistory.Date_En)) / func.lag(BourseHistory.Value).over(order_by= BourseHistory.Date_En)).label('daily_rate_of_change'),
         ((BourseHistory.Value - func.lag(BourseHistory.Value, 7).over(order_by= BourseHistory.Date_En)) / func.lag(BourseHistory.Value, 7).over(order_by= BourseHistory.Date_En)).label('weekly_rate_of_change'),
         ((BourseHistory.Value - func.lag(BourseHistory.Value, 30).over(order_by= BourseHistory.Date_En)) / func.lag(BourseHistory.Value, 30).over(order_by= BourseHistory.Date_En)).label('monthly_rate_of_change'),
-        ).where(BourseHistory.Index_Type == "total").limit(1)
+        ).where(BourseHistory.Index_Type == "total").order_by(BourseHistory.Date_En.desc()).limit(1)
     is_view = True
     __table__ = create_view(
         name= 'TotalIndex_view', 
@@ -111,11 +112,12 @@ class TotalIndex_view(Base):
 class WeightedIndex_view(Base):
     stmt = select(
         BourseHistory.Index_Type,
+        BourseHistory.Date_En,
         BourseHistory.Value,
         ((BourseHistory.Value - func.lag(BourseHistory.Value).over(order_by= BourseHistory.Date_En)) / func.lag(BourseHistory.Value).over(order_by= BourseHistory.Date_En)).label('daily_rate_of_change'),
         ((BourseHistory.Value - func.lag(BourseHistory.Value, 7).over(order_by= BourseHistory.Date_En)) / func.lag(BourseHistory.Value, 7).over(order_by= BourseHistory.Date_En)).label('weekly_rate_of_change'),
         ((BourseHistory.Value - func.lag(BourseHistory.Value, 30).over(order_by= BourseHistory.Date_En)) / func.lag(BourseHistory.Value, 30).over(order_by= BourseHistory.Date_En)).label('monthly_rate_of_change'),
-        ).where(BourseHistory.Index_Type == "weighted").limit(1)
+        ).where(BourseHistory.Index_Type == "weighted").order_by(BourseHistory.Date_En.desc()).limit(1)
     is_view = True
     __table__ = create_view(
         name= 'WeightedIndex_view', 
@@ -127,11 +129,12 @@ class WeightedIndex_view(Base):
 class Cryptocurrency_view(Base):
     stmt = select(
         CryptocurrencyHistory.Crypto_Type,
+        CryptocurrencyHistory.Date_En,
         CryptocurrencyHistory.Value,
         ((CryptocurrencyHistory.Value - func.lag(CryptocurrencyHistory.Value).over(order_by= CryptocurrencyHistory.Date_En)) / func.lag(CryptocurrencyHistory.Value).over(order_by= CryptocurrencyHistory.Date_En)).label('daily_rate_of_change'),
         ((CryptocurrencyHistory.Value - func.lag(CryptocurrencyHistory.Value, 7).over(order_by= CryptocurrencyHistory.Date_En)) / func.lag(CryptocurrencyHistory.Value, 7).over(order_by= CryptocurrencyHistory.Date_En)).label('weekly_rate_of_change'),
         ((CryptocurrencyHistory.Value - func.lag(CryptocurrencyHistory.Value, 30).over(order_by= CryptocurrencyHistory.Date_En)) / func.lag(CryptocurrencyHistory.Value, 30).over(order_by= CryptocurrencyHistory.Date_En)).label('monthly_rate_of_change'),
-        ).where(BourseHistory.Index_Type == "weighted").limit(1)
+        ).where(CryptocurrencyHistory.Crypto_Type == "bitcoin").order_by(CryptocurrencyHistory.Date_En.desc()).limit(1)
     is_view = True
     __table__ = create_view(
         name= 'Cryptocurrency_view', 

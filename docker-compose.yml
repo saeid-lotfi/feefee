@@ -10,6 +10,7 @@ services:
       - db
     volumes:
       - ./app:/app
+      - ./logs:/logs
 
   db:
     image: postgres:15

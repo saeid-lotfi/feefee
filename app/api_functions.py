@@ -2,9 +2,9 @@ from models import *
 
 def get_overview(db):
 
-    bourse_t_index_data = db.query(Bourse_Total_Index).all()
+    bourse_t_index_data = db.query(TotalIndex_view).all()
 
-    # bourse_w_index_data = db.query(BourseHistory).filter(BourseHistory.Index_Type == 'weighted').all()
+    bourse_w_index_data = db.query(WeightedIndex_view).all()
 
     # gold_coin_data = db.query(GoldHistory).filter(GoldHistory.Gold_Type == 'coin-tamam').all()
     
@@ -15,8 +15,8 @@ def get_overview(db):
     # fund_n_risk_data = db.query(FundHistory).filter(FundHistory.Fund_Type == 'no-risk').all()
 
     return [
-        bourse_t_index_data
-        # bourse_w_index_data,
+        bourse_t_index_data,
+        bourse_w_index_data
         # gold_coin_data,
         # dollar_data,
         # bitcoin_data,
