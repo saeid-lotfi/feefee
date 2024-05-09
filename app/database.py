@@ -10,9 +10,9 @@ from models import Base
 import logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers= [logging.FileHandler("/logs/init_db.log")])
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 init_db_logger = logging.getLogger("InitDB")
+init_db_logger.addHandler(logging.FileHandler("/logs/init_db.log"))
 init_db_logger.propagate = False
 
 ####################

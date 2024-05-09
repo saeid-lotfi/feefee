@@ -35,24 +35,18 @@ def get_tmc_data_by_url(url):
 
     return result
 
-def get_fund_meta_data():
-    
-    url = 'https://cdn.tsetmc.com/api/ClosingPrice/GetRelatedCompany/68'
-    data = get_tmc_data_by_url(url)
-
-    df = pd.DataFrame(data['relatedCompany'])
-    df['Fund_Id'] = df['insCode']
-    df['Fund_Name'] = df['instrument'].apply(lambda x: x['lVal18AFC'])
-    df['Fund_NameDetail'] = df['instrument'].apply(lambda x: x['lVal30'])
-    df = df[['Fund_Id', 'Fund_Name', 'Fund_NameDetail']]
-    
-    return df
-
 
 #################### tsetmc api
 def get_index_historic_data(index_type_code):
     
     url = f'https://cdn.tsetmc.com/api/Index/GetIndexB2History/{index_type_code}'
+    raw_data = get_tmc_data_by_url(url)
+    
+    return raw_data
+
+def get_fund_list_data():
+    
+    url = 'https://cdn.tsetmc.com/api/ClosingPrice/GetRelatedCompany/68'
     raw_data = get_tmc_data_by_url(url)
     
     return raw_data
@@ -94,6 +88,21 @@ def transform_index_historic_data(raw_data, index_type, index_code):
     df['Closed_Day'] = df['Closed_Day'].fillna(True)
     # backfill null values
     df[['Value', 'Previous_Value']] = df[['Value', 'Previous_Value']].ffill()
+
+    return df
+
+def transform_fund_list_data(raw_data):
+    
+    # change to dataframe
+    df = pd.DataFrame(raw_data['relatedCompany'])
+
+    # get interest data
+    df['Fund_Id'] = df['insCode']
+    df['Fund_Name'] = df['instrument'].apply(lambda x: x['lVal18AFC'])
+    df['Fund_NameDetail'] = df['instrument'].apply(lambda x: x['lVal30'])
+
+    # remove extra data
+    df = df[['Fund_Id', 'Fund_Name', 'Fund_NameDetail']]
 
     return df
 
@@ -205,17 +214,22 @@ def sync_bourse_index():
 
 def sync_fund_assets():
 
+    # get list of fund assetes
     fund_assets_logger.info("Starting fund sync task")
-    fund_metadata = get_fund_meta_data()
+    fund_assets_logger.info(f'Calling source api for fund list')
+    raw_fund_metadata = get_fund_list_data()
+    fund_assets_logger.info(f'Transformin fund list raw data')
+    fund_metadata = transform_fund_list_data(raw_fund_metadata)
 
+    # for every fund in list
     for row in fund_metadata.itertuples():
         fund_assets_logger.info(f'Calling source api for fund {row.Fund_Name}')
         raw_data = get_fund_historic_data(row.Fund_Id)
-        fund_assets_logger.info(f'Transforming raw data')
+        fund_assets_logger.info(f'Transforming raw data of fund {row.Fund_Name}')
         df = transform_fund_historic_data(raw_data, row.Fund_Name, row.Fund_NameDetail)
         fund_assets_logger.info(f'Data sample: \n {df.head()}')
         fund_assets_logger.info(f'Data sample: \n {df.tail()}')
-        fund_assets_logger.info(f'Inserting to db')
+        fund_assets_logger.info(f'Inserting to db for fund {row.Fund_Name}')
         insert_fund_historic_data(df)
         time.sleep(1)
 
