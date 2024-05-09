@@ -1,25 +1,23 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
-import threading
+
 
 from database import get_db, init_db
-from sync import schedule_update_db
-# from models import *
+from sync import schedule_sync_db
 from api_functions import get_overview, get_chart_data, get_assets
 
+# set logger
 import logging
 logging.basicConfig(
-    filename='/logs/db_sync.log', 
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s')
+logging.getLogger("fastapi")
 
 # initialize the server database
 init_db()
 
-# Start the background task in a separate thread
-background_thread = threading.Thread(target= schedule_update_db)
-background_thread.daemon = True  # Daemonize the thread so it exits when the main program exits
-background_thread.start()
+# start the sync process
+schedule_sync_db()
 
 # app instance
 app = FastAPI()

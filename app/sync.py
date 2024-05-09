@@ -1,15 +1,25 @@
-import pandas as pd
 import requests
 import datetime as dt
 import time
+import threading
 from sqlalchemy.dialects.postgresql import insert
+import pandas as pd
+pd.set_option('future.no_silent_downcasting', True)
 
 from database import get_db
 from models import *
-import logging
-logging.getLogger().setLevel(logging.INFO)
-pd.set_option('future.no_silent_downcasting', True)
 
+# set logger
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+bourse_index_logger = logging.getLogger("BourseIndex")
+bourse_index_logger.addHandler(logging.FileHandler("/logs/sync_bourse_index.log"))
+bourse_index_logger.propagate = False
+fund_assets_logger  = logging.getLogger("FundAssets")
+fund_assets_logger.addHandler(logging.FileHandler("/logs/sync_fund_assets.log"))
+fund_assets_logger.propagate = False
 
 ####################
 def get_tmc_data_by_url(url):
@@ -177,46 +187,64 @@ def insert_fund_historic_data(df):
 #################### main sync
 def sync_bourse_index():
 
+    bourse_index_logger.info("Starting fund sync task")
     index_metadata = {
         'total': 32097828799138957,
         'weighted': 67130298613737946
     }
 
     for index_type, index_type_code in index_metadata.items():
-        logging.info(f'Calling source api for index {index_type}')
+        bourse_index_logger.info(f'Calling source api for index {index_type}')
         raw_data = get_index_historic_data(index_type_code)
-        logging.info(f'Transforming raw data')
+        bourse_index_logger.info(f'Transforming raw data')
         df = transform_index_historic_data(raw_data, index_type, index_type_code)
-        logging.info(f'Data sample: \n {df.head()}')
-        logging.info(f'Data sample: \n {df.tail()}')
-        logging.info(f'Inserting to db')
+        bourse_index_logger.info(f'Data sample: \n {df.head()}')
+        bourse_index_logger.info(f'Data sample: \n {df.tail()}')
+        bourse_index_logger.info(f'Inserting to db')
         insert_index_historic_data(df)
 
 def sync_fund_assets():
 
+    fund_assets_logger.info("Starting fund sync task")
     fund_metadata = get_fund_meta_data()
 
     for row in fund_metadata.itertuples():
-        logging.info(f'Calling source api for fund {row.Fund_Name}')
+        fund_assets_logger.info(f'Calling source api for fund {row.Fund_Name}')
         raw_data = get_fund_historic_data(row.Fund_Id)
-        logging.info(f'Transforming raw data')
+        fund_assets_logger.info(f'Transforming raw data')
         df = transform_fund_historic_data(raw_data, row.Fund_Name, row.Fund_NameDetail)
-        logging.info(f'Data sample: \n {df.head()}')
-        logging.info(f'Data sample: \n {df.tail()}')
-        logging.info(f'Inserting to db')
+        fund_assets_logger.info(f'Data sample: \n {df.head()}')
+        fund_assets_logger.info(f'Data sample: \n {df.tail()}')
+        fund_assets_logger.info(f'Inserting to db')
         insert_fund_historic_data(df)
         time.sleep(1)
 
-def update_db():
-    
-    sync_bourse_index()
 
-    sync_fund_assets()
-
-def schedule_update_db():
-    logging.info("Starting background task: update_db")
+#################### schedule
+def schedule_sync_bourse_index():
     while True:
-        update_db()
-        logging.info("update_db executed successfully")
+        sync_bourse_index()
+        bourse_index_logger.info("sync_bourse_index executed successfully")
+        bourse_index_logger.info("next sync_bourse_index will be in 5 minutes ...")
         time.sleep(300)
+
+def schedule_sync_fund_assets():
+    while True:
+        sync_fund_assets()
+        fund_assets_logger.info("sync_fund_assets executed successfully")
+        fund_assets_logger.info("next sync_bourse_index will be in 1 hour ...")
+        time.sleep(3600)
+
+def schedule_sync_db():
+    
+    # bourse index
+    background_thread = threading.Thread(target= schedule_sync_bourse_index)
+    background_thread.daemon = True  # Daemonize the thread so it exits when the main program exits
+    background_thread.start()
+
+    # fund assets
+    background_thread = threading.Thread(target= schedule_sync_fund_assets)
+    background_thread.daemon = True  # Daemonize the thread so it exits when the main program exits
+    background_thread.start()
+    
 
