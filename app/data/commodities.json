@@ -1,0 +1,178 @@
+[
+  {
+    "name": "طلای سرخ نو ویرا",
+    "regNo": "11772",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "12913156843322499",
+    "lVal30": "طلای سرخ نو ویرا",
+    "lVal18AFC": "نهال",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "گروه زعفران سحرخیز",
+    "regNo": "11780",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "51200575796028449",
+    "lVal30": "گروه زعفران سحرخیز",
+    "lVal18AFC": "سحرخیز",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "در اوراق بهادار مبتنی بر طلای صبا",
+    "regNo": "12012",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "4626686276232042",
+    "lVal30": "در اوراق بهادار مبتنی بر طلای صبا",
+    "lVal18AFC": "نفیس",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "کیمیا زرین کاردان",
+    "regNo": "10615",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "58514988269776425",
+    "lVal30": "کیمیا زرین کاردان",
+    "lVal18AFC": "گنج",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "زرفام آشنا",
+    "regNo": "11967",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "33144542989832366",
+    "lVal30": "زرفام آشنا",
+    "lVal18AFC": "زرفام",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "پشتوانه سکه طلای زرافشان امید ایرانیان",
+    "regNo": "11530",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "33254899395816171",
+    "lVal30": "پشتوانه سکه طلای زرافشان امید ایرانیان",
+    "lVal18AFC": "زر",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "در اوراق بهادار مبتنی بر گواهی سپرده سکه طلا کهربا",
+    "regNo": "11856",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "25559236668122210",
+    "lVal30": "در اوراق بهادار مبتنی بر گواهی سپرده سکه طلا کهربا",
+    "lVal18AFC": "کهربا",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "در اوراق بهادار مبتنی بر سکه طلای کیان",
+    "regNo": "11556",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "12390706505809150",
+    "lVal30": "در اوراق بهادار مبتنی بر سکه طلای کیان",
+    "lVal18AFC": "گوهر",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "پشتوانه طلای لوتوس",
+    "regNo": "11509",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "46700660505281786",
+    "lVal30": "پشتوانه طلای لوتوس",
+    "lVal18AFC": "طلا",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "در اوراق بهادار مبتنی بر طلای زرین آگاه",
+    "regNo": "11899",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "32469128621155736",
+    "lVal30": "در اوراق بهادار مبتنی بر طلای زرین آگاه",
+    "lVal18AFC": "مثقال",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "در اوراق بهادار مبتنی بر سکه طلا نهایت نگر",
+    "regNo": "12008",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "30582275818828857",
+    "lVal30": "در اوراق بهادار مبتنی بر سکه طلا نهایت نگر",
+    "lVal18AFC": "ناب",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "طلای آسمان آلتون",
+    "regNo": "12006",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "28374437855144739",
+    "lVal30": "طلای آسمان آلتون",
+    "lVal18AFC": "آلتون",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "پروژه آرمان پرند مپنا",
+    "regNo": "11540",
+    "fundType": 13,
+    "dividendIntervalPeriod": 0,
+    "insCode": null,
+    "lVal30": "پروژه آرمان پرند مپنا",
+    "lVal18AFC": null,
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "طلای تابان تمدن",
+    "regNo": "10864",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "9089296888187061",
+    "lVal30": "طلای تابان تمدن",
+    "lVal18AFC": "تابش",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "طلای عیار مفید",
+    "regNo": "11586",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "34144395039913458",
+    "lVal30": "طلای عیار مفید",
+    "lVal18AFC": "عیار",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  },
+  {
+    "name": "طلای دنای زاگرس",
+    "regNo": "12043",
+    "fundType": 5,
+    "dividendIntervalPeriod": 0,
+    "insCode": "38544104313215500",
+    "lVal30": "طلای دنای زاگرس",
+    "lVal18AFC": "جواهر",
+    "typeNum": "32",
+    "typeName": "صندوق مبتنی بر طلا"
+  }
+]

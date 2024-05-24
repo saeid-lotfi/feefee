@@ -1,6 +1,7 @@
 import requests
 import datetime as dt
 import time
+import json
 import threading
 from sqlalchemy.dialects.postgresql import insert
 import pandas as pd
@@ -45,9 +46,10 @@ def get_index_historic_data(index_type_code):
     return raw_data
 
 def get_fund_list_data():
-    
-    url = 'https://cdn.tsetmc.com/api/ClosingPrice/GetRelatedCompany/68'
-    raw_data = get_tmc_data_by_url(url)
+
+    fund_list_file = 'data/fund_metadata.json'
+    with open(fund_list_file, 'r') as file:
+        raw_data = json.load(file)
     
     return raw_data
 
@@ -94,19 +96,21 @@ def transform_index_historic_data(raw_data, index_type, index_code):
 def transform_fund_list_data(raw_data):
     
     # change to dataframe
-    df = pd.DataFrame(raw_data['relatedCompany'])
+    df = pd.DataFrame(raw_data)
 
     # get interest data
     df['Fund_Id'] = df['insCode']
-    df['Fund_Name'] = df['instrument'].apply(lambda x: x['lVal18AFC'])
-    df['Fund_NameDetail'] = df['instrument'].apply(lambda x: x['lVal30'])
+    df['Fund_Name'] = df['lVal18AFC']
+    df['Fund_NameDetail'] = df['name']
+    df['Fund_TypeNumber'] = df['typeNum']
+    df['Fund_TypeName'] = df['typeName']
 
     # remove extra data
-    df = df[['Fund_Id', 'Fund_Name', 'Fund_NameDetail']]
+    df = df[['Fund_Id', 'Fund_Name', 'Fund_NameDetail', 'Fund_TypeNumber', 'Fund_TypeName']]
 
     return df
 
-def transform_fund_historic_data(raw_data, fund_name, fund_name_detail):
+def transform_fund_historic_data(raw_data, fund_name, fund_name_detail, fund_type_number, fund_type_name):
 
     # change to dataframe
     df = pd.DataFrame(raw_data['closingPriceDaily'])
@@ -115,13 +119,15 @@ def transform_fund_historic_data(raw_data, fund_name, fund_name_detail):
     df['Fund_Id'] = df['insCode']
     df['Fund_Name'] = fund_name
     df['Fund_NameDetail'] = fund_name_detail
+    df['Fund_TypeNumber'] = fund_type_number
+    df['Fund_TypeName'] = fund_type_name
     df['Date_En'] = df['dEven'].astype(str).apply(lambda x: dt.datetime(int(x[:4]), int(x[4:6]), int(x[6:8])))
     df['Price_Closing'] = df['pClosing']
     df['Price_Yesterday'] = df['priceYesterday']
     df['Closed_Day'] = False
 
     # remove extra data
-    df = df[['Fund_Id', 'Date_En', 'Fund_Name', 'Fund_NameDetail', 'Price_Closing', 'Price_Yesterday', 'Closed_Day']]
+    df = df[['Fund_Id', 'Date_En', 'Fund_Name', 'Fund_NameDetail', 'Fund_TypeNumber', 'Fund_TypeName', 'Price_Closing', 'Price_Yesterday', 'Closed_Day']]
 
     # build time frame and merge it with dataframe
     time_frame = pd.DataFrame({
@@ -134,7 +140,9 @@ def transform_fund_historic_data(raw_data, fund_name, fund_name_detail):
     df['Closed_Day'] = df['Closed_Day'].fillna(True)
     # backfill null values
     df['Fund_Name'] = df['Fund_Name'].fillna(fund_name)
-    df['Fund_NameDetail'] = df['Fund_NameDetail'].fillna(fund_name)
+    df['Fund_NameDetail'] = df['Fund_NameDetail'].fillna(fund_name_detail)
+    df['Fund_TypeNumber'] = df['Fund_TypeNumber'].fillna(fund_type_number)
+    df['Fund_TypeName'] = df['Fund_TypeName'].fillna(fund_type_name)
     df[['Price_Closing', 'Price_Yesterday']] = df[['Price_Closing', 'Price_Yesterday']].ffill()
 
     return df
@@ -174,6 +182,8 @@ def insert_fund_historic_data(df):
     set_={
         'Fund_Name': stmt.excluded.Fund_Name,
         'Fund_NameDetail': stmt.excluded.Fund_NameDetail,
+        'Fund_TypeNumber': stmt.excluded.Fund_TypeNumber,
+        'Fund_TypeName': stmt.excluded.Fund_TypeName,
         'Price_Closing': stmt.excluded.Price_Closing,
         'Price_Yesterday': stmt.excluded.Price_Yesterday,
         'Closed_Day': stmt.excluded.Closed_Day
@@ -226,7 +236,7 @@ def sync_fund_assets():
         fund_assets_logger.info(f'Calling source api for fund {row.Fund_Name}')
         raw_data = get_fund_historic_data(row.Fund_Id)
         fund_assets_logger.info(f'Transforming raw data of fund {row.Fund_Name}')
-        df = transform_fund_historic_data(raw_data, row.Fund_Name, row.Fund_NameDetail)
+        df = transform_fund_historic_data(raw_data, row.Fund_Name, row.Fund_NameDetail, row.Fund_TypeNumber, row.Fund_TypeName)
         fund_assets_logger.info(f'Data sample: \n {df.head()}')
         fund_assets_logger.info(f'Data sample: \n {df.tail()}')
         fund_assets_logger.info(f'Inserting to db for fund {row.Fund_Name}')

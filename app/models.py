@@ -1,4 +1,4 @@
-from sqlalchemy import String, Boolean, Column, Float, BigInteger, Date, PrimaryKeyConstraint
+from sqlalchemy import String, Boolean, Column, Float, Integer, BigInteger, Date, PrimaryKeyConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import create_view
 from sqlalchemy import select, func
@@ -74,6 +74,8 @@ class FundHistory(Base):
     Date_En = Column(Date, nullable= False)
     Fund_Name = Column(String, nullable= False)
     Fund_NameDetail = Column(String, nullable= False)
+    Fund_TypeNumber = Column(Integer, nullable= False)
+    Fund_TypeName = Column(String, nullable= False)
     Price_Closing = Column(Float, nullable= False)
     Price_Yesterday = Column(Float, nullable= False)
     Closed_Day = Column(Boolean, nullable= False)
