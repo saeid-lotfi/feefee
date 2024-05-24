@@ -2,10 +2,12 @@ import requests
 import datetime as dt
 import time
 import json
+import pytz
 import threading
 from sqlalchemy.dialects.postgresql import insert
 import pandas as pd
 pd.set_option('future.no_silent_downcasting', True)
+pd.set_option('display.max_columns', None)
 
 from database import get_db
 from models import *
@@ -21,6 +23,9 @@ bourse_index_logger.propagate = False
 fund_assets_logger  = logging.getLogger("FundAssets")
 fund_assets_logger.addHandler(logging.FileHandler("/logs/sync_fund_assets.log"))
 fund_assets_logger.propagate = False
+cryptocurrency_logger  = logging.getLogger("CryptoCuccency")
+cryptocurrency_logger.addHandler(logging.FileHandler("/logs/sync_cryptocurrency.log"))
+cryptocurrency_logger.propagate = False
 
 ####################
 def get_tmc_data_by_url(url):
@@ -36,6 +41,12 @@ def get_tmc_data_by_url(url):
 
     return result
 
+def get_exir_data_by_url(url):
+
+    response = requests.get(url)
+    result = response.json()
+
+    return result
 
 #################### tsetmc api
 def get_index_historic_data(index_type_code):
@@ -60,6 +71,12 @@ def get_fund_historic_data(fund_id):
     
     return raw_data
 
+def get_cryptocurrency_historic_data(crypto_symbol, from_timestamp, to_timestamp):
+    
+    url = f'https://api.exir.io/v2/chart?symbol={crypto_symbol}&resolution=15&from={from_timestamp}&to={to_timestamp}'
+    raw_data = get_exir_data_by_url(url)
+    
+    return raw_data
 
 #################### transform tsetmc data
 def transform_index_historic_data(raw_data, index_type, index_code):
@@ -147,6 +164,22 @@ def transform_fund_historic_data(raw_data, fund_name, fund_name_detail, fund_typ
 
     return df
 
+def transform_cryptocurrency_historic_data(raw_data, crypto_id):
+    
+    # change to dataframe
+    df = pd.DataFrame(raw_data)
+
+    # get interest data
+    df['Crypto_Id'] = crypto_id
+    df['Datetime_UTC'] = pd.to_datetime(df['time'])
+    df['Datetime_Local'] = df['Datetime_UTC'].dt.tz_convert(pytz.timezone('Asia/Tehran')).dt.tz_localize(None)
+    df['Value'] = df['close']
+    df['Previous_Value'] = df['open']
+
+    # remove extra data
+    df = df[['Crypto_Id', 'Datetime_UTC', 'Datetime_Local', 'Value', 'Previous_Value']]
+
+    return df
 
 #################### push to db
 def insert_index_historic_data(df):
@@ -202,11 +235,34 @@ def insert_fund_historic_data(df):
     finally:
         db.close()
     
+def insert_cryptocurrency_historic_data(df):
+    records = df.to_dict(orient= 'records')
+    stmt = insert(CryptocurrencyHistory).values(records)
+    stmt = stmt.on_conflict_do_update(
+    index_elements =['Crypto_Id', 'Datetime_Local'],
+    set_={
+        'Datetime_UTC': stmt.excluded.Datetime_UTC,
+        'Value': stmt.excluded.Value,
+        'Previous_Value': stmt.excluded.Previous_Value
+        }
+    )
+    
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        db.execute(stmt)
+        db.commit()
+    except Exception as e:
+        # Rollback the transaction in case of error
+        db.rollback()
+        raise e
+    finally:
+        db.close()
 
 #################### main sync
 def sync_bourse_index():
 
-    bourse_index_logger.info("Starting fund sync task")
+    bourse_index_logger.info("Starting bourse index sync task")
     index_metadata = {
         'total': 32097828799138957,
         'weighted': 67130298613737946
@@ -243,6 +299,30 @@ def sync_fund_assets():
         insert_fund_historic_data(df)
         time.sleep(1)
 
+def sync_cryptocurrency():
+
+    cryptocurrency_logger.info("Starting cryptocurrency sync task")
+    crypto_metadata = {
+        'teter': 'usdt-irt',
+        'bitcoin': 'btc-irt'
+    }
+
+    from_time = dt.datetime(2024, 3, 1, tzinfo= pytz.timezone('Asia/Tehran'))
+    from_timestamp = int(from_time.timestamp())
+    to_time = dt.datetime.now()
+    to_timestamp = int(to_time.timestamp())
+    cryptocurrency_logger.info(f"Getting data from {str(from_time)} to {str(to_time)}")
+    cryptocurrency_logger.info(f"UNIX timestamp from {str(from_timestamp)} to {str(to_timestamp)}")
+
+    for crypto_name, crypto_symbol in crypto_metadata.items():
+        cryptocurrency_logger.info(f'Calling source api for crypto {crypto_name}')
+        raw_data = get_cryptocurrency_historic_data(crypto_symbol, from_timestamp, to_timestamp)
+        cryptocurrency_logger.info(f'Transforming raw data')
+        df = transform_cryptocurrency_historic_data(raw_data, crypto_name)
+        cryptocurrency_logger.info(f'Data sample: \n {df.head()}')
+        cryptocurrency_logger.info(f'Data sample: \n {df.tail()}')
+        cryptocurrency_logger.info(f'Inserting to db')
+        insert_cryptocurrency_historic_data(df)
 
 #################### schedule
 def schedule_sync_bourse_index():
@@ -256,18 +336,30 @@ def schedule_sync_fund_assets():
     while True:
         sync_fund_assets()
         fund_assets_logger.info("sync_fund_assets executed successfully")
-        fund_assets_logger.info("next sync_bourse_index will be in 1 hour ...")
+        fund_assets_logger.info("next sync_fund_assets will be in 1 hour ...")
         time.sleep(3600)
+
+def schedule_sync_cryptocurrency():
+    while True:
+        sync_cryptocurrency()
+        fund_assets_logger.info("sync_cryptocurrency executed successfully")
+        fund_assets_logger.info("next sync_cryptocurrency will be in 5 minutes ...")
+        time.sleep(300)
 
 def schedule_sync_db():
     
     # bourse index
-    background_thread = threading.Thread(target= schedule_sync_bourse_index)
-    background_thread.daemon = True  # Daemonize the thread so it exits when the main program exits
-    background_thread.start()
+    # background_thread = threading.Thread(target= schedule_sync_bourse_index)
+    # background_thread.daemon = True  # Daemonize the thread so it exits when the main program exits
+    # background_thread.start()
 
-    # fund assets
-    background_thread = threading.Thread(target= schedule_sync_fund_assets)
+    # # fund assets
+    # background_thread = threading.Thread(target= schedule_sync_fund_assets)
+    # background_thread.daemon = True  # Daemonize the thread so it exits when the main program exits
+    # background_thread.start()
+
+    # cryptocurrency
+    background_thread = threading.Thread(target= schedule_sync_cryptocurrency)
     background_thread.daemon = True  # Daemonize the thread so it exits when the main program exits
     background_thread.start()
     
