@@ -194,44 +194,101 @@ def get_bourse_index_state_data(index_type):
     db_gen = get_db()
     db = next(db_gen)
 
-    latest_value, latest_date = db.query(BourseHistory.Value, BourseHistory.Date_En) \
+    result = db.query(BourseHistory.Value, BourseHistory.Date_En) \
     .filter(BourseHistory.Index_Type == index_type) \
         .order_by(BourseHistory.Date_En.desc()) \
             .first()
     
-    latest_date_1 = latest_date - dt.timedelta(days= 1)
-    latest_date_7 = latest_date - dt.timedelta(days= 7)
-    latest_date_30 = latest_date - dt.timedelta(days= 30)
+    if result != None:
+        latest_value, latest_date = result
+        latest_date_1 = latest_date - dt.timedelta(days= 1)
+        latest_date_7 = latest_date - dt.timedelta(days= 7)
+        latest_date_30 = latest_date - dt.timedelta(days= 30)
 
-    latest_value_1 = db.query(BourseHistory.Value) \
-        .filter(BourseHistory.Index_Type == index_type, BourseHistory.Date_En == latest_date_1) \
-            .order_by(BourseHistory.Date_En.desc()) \
-                .first()[0]
+        latest_value_1 = db.query(BourseHistory.Value) \
+            .filter(BourseHistory.Index_Type == index_type, BourseHistory.Date_En == latest_date_1) \
+                .order_by(BourseHistory.Date_En.desc()) \
+                    .first()[0]
 
-    latest_value_7 = db.query(BourseHistory.Value) \
-        .filter(BourseHistory.Index_Type == index_type, BourseHistory.Date_En == latest_date_7) \
-            .order_by(BourseHistory.Date_En.desc()) \
-                .first()[0]
+        latest_value_7 = db.query(BourseHistory.Value) \
+            .filter(BourseHistory.Index_Type == index_type, BourseHistory.Date_En == latest_date_7) \
+                .order_by(BourseHistory.Date_En.desc()) \
+                    .first()[0]
 
-    latest_value_30 = db.query(BourseHistory.Value) \
-        .filter(BourseHistory.Index_Type == index_type, BourseHistory.Date_En == latest_date_30) \
-            .order_by(BourseHistory.Date_En.desc()) \
-                .first()[0]
+        latest_value_30 = db.query(BourseHistory.Value) \
+            .filter(BourseHistory.Index_Type == index_type, BourseHistory.Date_En == latest_date_30) \
+                .order_by(BourseHistory.Date_En.desc()) \
+                    .first()[0]
+        
+        daily_rate_of_change = (latest_value - latest_value_1) / latest_value_1
+        weekly_rate_of_change = (latest_value - latest_value_7) / latest_value_7
+        monthly_rate_of_change = (latest_value - latest_value_30) / latest_value_30
+
+        record = {
+            'Index_Type': index_type,
+            'Date_Local': latest_date,
+            'Latest_Value': latest_value,
+            'Daily_Rate_Of_Change': daily_rate_of_change,
+            'Weekly_Rate_Of_Change': weekly_rate_of_change,
+            'Monthly_Rate_Of_Change': monthly_rate_of_change
+        }
+
+        return record
+
+def get_fund_asset_state_data(fund_id):
     
-    daily_rate_of_change = (latest_value - latest_value_1) / latest_value_1
-    weekly_rate_of_change = (latest_value - latest_value_7) / latest_value_7
-    monthly_rate_of_change = (latest_value - latest_value_30) / latest_value_30
+    db_gen = get_db()
+    db = next(db_gen)
 
-    record = {
-        'Index_Type': index_type,
-        'Date_Local': latest_date,
-        'Latest_Value': latest_value,
-        'Daily_Rate_Of_Change': daily_rate_of_change,
-        'Weekly_Rate_Of_Change': weekly_rate_of_change,
-        'Monthly_Rate_Of_Change': monthly_rate_of_change
-    }
+    result = db.query(
+        FundHistory.Fund_Name,
+        FundHistory.Fund_NameDetail,
+        FundHistory.Fund_TypeNumber,
+        FundHistory.Fund_TypeName,
+        FundHistory.Price_Closing, 
+        FundHistory.Date_En) \
+    .filter(FundHistory.Fund_Id == fund_id) \
+        .order_by(FundHistory.Date_En.desc()) \
+            .first()
+    
+    if result != None:
+        fund_name, fund_name_detail, fund_type_number, fund_type_name, latest_value, latest_date = result
+        latest_date_1 = latest_date - dt.timedelta(days= 1)
+        latest_date_7 = latest_date - dt.timedelta(days= 7)
+        latest_date_30 = latest_date - dt.timedelta(days= 30)
 
-    return record
+        latest_value_1 = db.query(FundHistory.Price_Closing) \
+            .filter(FundHistory.Fund_Id == fund_id, FundHistory.Date_En == latest_date_1) \
+                .order_by(FundHistory.Date_En.desc()) \
+                    .first()[0]
+
+        latest_value_7 = db.query(FundHistory.Price_Closing) \
+            .filter(FundHistory.Fund_Id == fund_id, FundHistory.Date_En == latest_date_7) \
+                .order_by(FundHistory.Date_En.desc()) \
+                    .first()[0]
+
+        latest_value_30 = db.query(FundHistory.Price_Closing) \
+            .filter(FundHistory.Fund_Id == fund_id, FundHistory.Date_En == latest_date_30) \
+                .order_by(FundHistory.Date_En.desc()) \
+                    .first()[0]
+        
+        daily_rate_of_change = (latest_value - latest_value_1) / latest_value_1
+        weekly_rate_of_change = (latest_value - latest_value_7) / latest_value_7
+        monthly_rate_of_change = (latest_value - latest_value_30) / latest_value_30
+
+        record = {
+            'Fund_Id': fund_id,
+            'Date_Local': latest_date,
+            'Fund_Name': fund_name,
+            'Fund_NameDetail': fund_name_detail,
+            'Fund_TypeNumber': fund_type_number,
+            'Fund_TypeName': fund_type_name,
+            'Latest_Value': latest_value,
+            'Daily_Rate_Of_Change': daily_rate_of_change,
+            'Weekly_Rate_Of_Change': weekly_rate_of_change,
+            'Monthly_Rate_Of_Change': monthly_rate_of_change
+        }
+        return record
 
 def get_cryptocurrency_state_data(crypto_name):
     
@@ -239,44 +296,46 @@ def get_cryptocurrency_state_data(crypto_name):
     db_gen = get_db()
     db = next(db_gen)
 
-    latest_value, latest_date = db.query(CryptocurrencyHistory.Value, CryptocurrencyHistory.Date_Local) \
+    result = db.query(CryptocurrencyHistory.Value, CryptocurrencyHistory.Date_Local) \
     .filter(CryptocurrencyHistory.Crypto_Id == crypto_name) \
         .order_by(CryptocurrencyHistory.Datetime_Local.desc()) \
             .first()
     
-    latest_date_1 = latest_date - dt.timedelta(days= 1)
-    latest_date_7 = latest_date - dt.timedelta(days= 7)
-    latest_date_30 = latest_date - dt.timedelta(days= 30)
+    if result != None:
+        latest_value, latest_date = result
+        latest_date_1 = latest_date - dt.timedelta(days= 1)
+        latest_date_7 = latest_date - dt.timedelta(days= 7)
+        latest_date_30 = latest_date - dt.timedelta(days= 30)
 
-    latest_value_1 = db.query(CryptocurrencyHistory.Value) \
-        .filter(CryptocurrencyHistory.Crypto_Id == crypto_name, CryptocurrencyHistory.Date_Local == latest_date_1) \
-            .order_by(CryptocurrencyHistory.Datetime_Local.desc()) \
-                .first()[0]
+        latest_value_1 = db.query(CryptocurrencyHistory.Value) \
+            .filter(CryptocurrencyHistory.Crypto_Id == crypto_name, CryptocurrencyHistory.Date_Local == latest_date_1) \
+                .order_by(CryptocurrencyHistory.Datetime_Local.desc()) \
+                    .first()[0]
 
-    latest_value_7 = db.query(CryptocurrencyHistory.Value) \
-        .filter(CryptocurrencyHistory.Crypto_Id == crypto_name, CryptocurrencyHistory.Date_Local == latest_date_7) \
-            .order_by(CryptocurrencyHistory.Datetime_Local.desc()) \
-                .first()[0]
+        latest_value_7 = db.query(CryptocurrencyHistory.Value) \
+            .filter(CryptocurrencyHistory.Crypto_Id == crypto_name, CryptocurrencyHistory.Date_Local == latest_date_7) \
+                .order_by(CryptocurrencyHistory.Datetime_Local.desc()) \
+                    .first()[0]
 
-    latest_value_30 = db.query(CryptocurrencyHistory.Value) \
-        .filter(CryptocurrencyHistory.Crypto_Id == crypto_name, CryptocurrencyHistory.Date_Local == latest_date_30) \
-            .order_by(CryptocurrencyHistory.Datetime_Local.desc()) \
-                .first()[0]
-    
-    daily_rate_of_change = (latest_value - latest_value_1) / latest_value_1
-    weekly_rate_of_change = (latest_value - latest_value_7) / latest_value_7
-    monthly_rate_of_change = (latest_value - latest_value_30) / latest_value_30
+        latest_value_30 = db.query(CryptocurrencyHistory.Value) \
+            .filter(CryptocurrencyHistory.Crypto_Id == crypto_name, CryptocurrencyHistory.Date_Local == latest_date_30) \
+                .order_by(CryptocurrencyHistory.Datetime_Local.desc()) \
+                    .first()[0]
+        
+        daily_rate_of_change = (latest_value - latest_value_1) / latest_value_1
+        weekly_rate_of_change = (latest_value - latest_value_7) / latest_value_7
+        monthly_rate_of_change = (latest_value - latest_value_30) / latest_value_30
 
-    record = {
-        'Crypto_Id': crypto_name,
-        'Date_Local': latest_date,
-        'Latest_Value': latest_value,
-        'Daily_Rate_Of_Change': daily_rate_of_change,
-        'Weekly_Rate_Of_Change': weekly_rate_of_change,
-        'Monthly_Rate_Of_Change': monthly_rate_of_change
-    }
+        record = {
+            'Crypto_Id': crypto_name,
+            'Date_Local': latest_date,
+            'Latest_Value': latest_value,
+            'Daily_Rate_Of_Change': daily_rate_of_change,
+            'Weekly_Rate_Of_Change': weekly_rate_of_change,
+            'Monthly_Rate_Of_Change': monthly_rate_of_change
+        }
 
-    return record
+        return record
 
 
 #################### push to db
@@ -382,6 +441,34 @@ def insert_index_state_data(record):
     finally:
         db.close()
 
+def insert_fund_state_data(record):
+    stmt = insert(FundState).values(record)
+    stmt = stmt.on_conflict_do_update(
+    index_elements =['Fund_Id', 'Date_Local'],
+    set_={
+        'Fund_Name': stmt.excluded.Fund_Name,
+        'Fund_NameDetail': stmt.excluded.Fund_NameDetail,
+        'Fund_TypeNumber': stmt.excluded.Fund_TypeNumber,
+        'Fund_TypeName': stmt.excluded.Fund_TypeName,
+        'Latest_Value': stmt.excluded.Latest_Value,
+        'Daily_Rate_Of_Change': stmt.excluded.Daily_Rate_Of_Change,
+        'Weekly_Rate_Of_Change': stmt.excluded.Weekly_Rate_Of_Change,
+        'Monthly_Rate_Of_Change': stmt.excluded.Monthly_Rate_Of_Change
+        }
+    )
+    
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        db.execute(stmt)
+        db.commit()
+    except Exception as e:
+        # Rollback the transaction in case of error
+        db.rollback()
+        raise e
+    finally:
+        db.close()
+
 def insert_cryptocurrency_state_data(record):
     stmt = insert(CryptocurrencyState).values(record)
     stmt = stmt.on_conflict_do_update(
@@ -407,7 +494,7 @@ def insert_cryptocurrency_state_data(record):
         db.close()
 
 
-#################### main sync
+#################### sync historic
 def sync_bourse_index_historic():
 
     bourse_index_logger.info("Starting bourse index sync task")
@@ -430,7 +517,7 @@ def sync_fund_assets_historic():
 
     # get list of fund assetes
     fund_assets_logger.info("Starting fund sync task")
-    fund_assets_logger.info(f'Calling source api for fund list')
+    fund_assets_logger.info(f'reading metadata for fund list')
     raw_fund_metadata = get_fund_list_data()
     fund_assets_logger.info(f'Transformin fund list raw data')
     fund_metadata = transform_fund_list_data(raw_fund_metadata)
@@ -445,7 +532,7 @@ def sync_fund_assets_historic():
         fund_assets_logger.info(f'Data sample: \n {df.tail()}')
         fund_assets_logger.info(f'Inserting to db for fund {row.Fund_Name}')
         insert_fund_historic_data(df)
-        time.sleep(1)
+        time.sleep(0.5)
 
 def sync_cryptocurrency_historic():
 
@@ -483,6 +570,8 @@ def sync_cryptocurrency_historic():
         cryptocurrency_logger.info(f'Inserting to db')
         insert_cryptocurrency_historic_data(df)
 
+
+#################### sync state
 def sync_bourse_index_state():
 
     bourse_index_logger.info("Starting bourse_index_state sync task")
@@ -494,10 +583,34 @@ def sync_bourse_index_state():
     for index_type, index_code in index_metadata.items():
         bourse_index_logger.info(f'Syncing index state for {index_type}')
         record = get_bourse_index_state_data(index_type)
-        bourse_index_logger.info(f'State of {index_type}:')
-        bourse_index_logger.info(str(record))
-        bourse_index_logger.info(f'Inserting to db')
-        insert_index_state_data(record)
+        if record != None:
+            bourse_index_logger.info(f'State of {index_type}:')
+            bourse_index_logger.info(str(record))
+            bourse_index_logger.info(f'Inserting to db')
+            insert_index_state_data(record)
+        else:
+            bourse_index_logger.info(f'Not found {index_type}:')
+
+def sync_fund_assets_state():
+
+    # get list of fund assetes
+    fund_assets_logger.info("Starting fund_assets_state sync task")
+    fund_assets_logger.info(f'reading metadata for fund list')
+    raw_fund_metadata = get_fund_list_data()
+    fund_assets_logger.info(f'Transformin fund list raw data')
+    fund_metadata = transform_fund_list_data(raw_fund_metadata)
+
+    # for every fund in list
+    for row in fund_metadata.itertuples():
+        fund_assets_logger.info(f'Syncing fund state for {row.Fund_Name}')
+        record = get_fund_asset_state_data(row.Fund_Id)
+        if record != None:
+            fund_assets_logger.info(f'State of {row.Fund_Name}:')
+            fund_assets_logger.info(str(record))
+            fund_assets_logger.info(f'Inserting to db')
+            insert_fund_state_data(record)
+        else:
+            fund_assets_logger.info(f'Not found {row.Fund_Name}')
 
 def sync_cryptocurrency_state():
 
@@ -510,10 +623,13 @@ def sync_cryptocurrency_state():
     for crypto_name, crypto_symbol in crypto_metadata.items():
         cryptocurrency_logger.info(f'Syncing crypto state for {crypto_name}')
         record = get_cryptocurrency_state_data(crypto_name)
-        cryptocurrency_logger.info(f'State of {crypto_name}:')
-        cryptocurrency_logger.info(str(record))
-        cryptocurrency_logger.info(f'Inserting to db')
-        insert_cryptocurrency_state_data(record)
+        if record != None:
+            cryptocurrency_logger.info(f'State of {crypto_name}:')
+            cryptocurrency_logger.info(str(record))
+            cryptocurrency_logger.info(f'Inserting to db')
+            insert_cryptocurrency_state_data(record)
+        else:
+            cryptocurrency_logger.info(f'Not found {crypto_name}')
 
 
 #################### schedule
@@ -522,7 +638,7 @@ def schedule_sync_bourse_index_historic():
         sync_bourse_index_historic()
         bourse_index_logger.info("sync_bourse_index_historic executed successfully")
         bourse_index_logger.info("next sync_bourse_index_historic will be in 5 minutes ...")
-        time.sleep(300)
+        time.sleep(3600)
 
 def schedule_sync_fund_assets_historic():
     while True:
@@ -536,21 +652,28 @@ def schedule_sync_cryptocurrency_historic():
         sync_cryptocurrency_historic()
         cryptocurrency_logger.info("sync_cryptocurrency_historic executed successfully")
         cryptocurrency_logger.info("next sync_cryptocurrency_historic will be in 5 minutes ...")
-        time.sleep(300)
+        time.sleep(600)
 
 def schedule_sync_bourse_index_state():
     while True:
         sync_bourse_index_state()
-        cryptocurrency_logger.info("sync_bourse_index_state executed successfully")
-        cryptocurrency_logger.info("next sync_bourse_index_state will be in 30 seconds ...")
-        time.sleep(30)
+        bourse_index_logger.info("sync_bourse_index_state executed successfully")
+        bourse_index_logger.info("next sync_bourse_index_state will be in 30 seconds ...")
+        time.sleep(60)
+
+def schedule_sync_fund_assets_state():
+    while True:
+        sync_fund_assets_state()
+        fund_assets_logger.info("ync_fund_assets_state executed successfully")
+        fund_assets_logger.info("next schedule_sync_fund_assets_state will be in 30 seconds ...")
+        time.sleep(60)
 
 def schedule_sync_cryptocurrency_state():
     while True:
         sync_cryptocurrency_state()
         cryptocurrency_logger.info("sync_cryptocurrency_state executed successfully")
         cryptocurrency_logger.info("next sync_cryptocurrency_state will be in 30 seconds ...")
-        time.sleep(30)
+        time.sleep(60)
 
 def schedule_sync_db():
     
@@ -560,17 +683,14 @@ def schedule_sync_db():
     background_thread.start()
 
     # fund assets
-    # background_thread = threading.Thread(target= schedule_sync_fund_assets_historic)
-    # background_thread.daemon = True  # Daemonize the thread so it exits when the main program exits
-    # background_thread.start()
+    background_thread = threading.Thread(target= schedule_sync_fund_assets_historic)
+    background_thread.daemon = True  # Daemonize the thread so it exits when the main program exits
+    background_thread.start()
 
     # cryptocurrency
     background_thread = threading.Thread(target= sync_cryptocurrency_historic)
     background_thread.daemon = True  # Daemonize the thread so it exits when the main program exits
     background_thread.start()
-
-    # first wait
-    time.sleep(60)
 
     # bourse index
     background_thread = threading.Thread(target= schedule_sync_bourse_index_state)
@@ -578,9 +698,9 @@ def schedule_sync_db():
     background_thread.start()
 
     # fund assets
-    # background_thread = threading.Thread(target= schedule_sync_fund_assets_state)
-    # background_thread.daemon = True  # Daemonize the thread so it exits when the main program exits
-    # background_thread.start()
+    background_thread = threading.Thread(target= schedule_sync_fund_assets_state)
+    background_thread.daemon = True  # Daemonize the thread so it exits when the main program exits
+    background_thread.start()
 
     # cryptocurrency
     background_thread = threading.Thread(target= schedule_sync_cryptocurrency_state)

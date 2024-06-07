@@ -2,15 +2,15 @@ from models import *
 
 def get_overview(db):
 
-    bourse_t_index_data = db.query(IndexState).filter(IndexState.Index_Type == 'total').all()
+    bourse_t_index_data = db.query(IndexState).filter(IndexState.Index_Type == 'total').order_by(IndexState.Date_Local.desc()).first()
 
-    bourse_w_index_data = db.query(IndexState).filter(IndexState.Index_Type == 'total').all()
+    bourse_w_index_data = db.query(IndexState).filter(IndexState.Index_Type == 'total').order_by(IndexState.Date_Local.desc()).first()
 
     # gold_coin_data = db.query(GoldHistory).filter(GoldHistory.Gold_Type == 'coin-tamam').all()
     
-    dollar_data = db.query(CryptocurrencyState).filter(CryptocurrencyState.Crypto_Id == 'teter').all()
+    dollar_data = db.query(CryptocurrencyState).filter(CryptocurrencyState.Crypto_Id == 'teter').order_by(CryptocurrencyState.Date_Local.desc()).first()
 
-    bitcoin_data = db.query(CryptocurrencyState).filter(CryptocurrencyState.Crypto_Id == 'bitcoin').all()
+    bitcoin_data = db.query(CryptocurrencyState).filter(CryptocurrencyState.Crypto_Id == 'bitcoin').order_by(CryptocurrencyState.Date_Local.desc()).first()
     
     # fund_n_risk_data = db.query(FundHistory).filter(FundHistory.Fund_Type == 'no-risk').all()
 
@@ -48,6 +48,6 @@ def get_chart_data(db, candle, from_time, to_time):
 
 def get_assets(db):
 
-    fund_assets_data = db.query(FundHistory).filter(FundHistory.Index_Type == 'weighted').all()
+    fund_assets_data = db.query(FundState).all()
 
     return fund_assets_data

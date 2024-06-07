@@ -115,3 +115,22 @@ class CryptocurrencyState(Base):
         PrimaryKeyConstraint('Crypto_Id', 'Date_Local'),
     )
     is_view = False
+
+class FundState(Base):
+    __tablename__ = 'FundState'
+
+    Fund_Id = Column(BigInteger, nullable= False)
+    Date_Local = Column(Date, nullable= False)
+    Fund_Name = Column(String, nullable= False)
+    Fund_NameDetail = Column(String, nullable= False)
+    Fund_TypeNumber = Column(Integer, nullable= False)
+    Fund_TypeName = Column(String, nullable= False)
+    Latest_Value = Column(Float, nullable= False)
+    Daily_Rate_Of_Change = Column(Float, nullable= False)
+    Weekly_Rate_Of_Change = Column(Float, nullable= False)
+    Monthly_Rate_Of_Change = Column(Float, nullable= False)
+
+    __table_args__ = (
+        PrimaryKeyConstraint('Fund_Id', 'Date_Local'),
+    )
+    is_view = False
