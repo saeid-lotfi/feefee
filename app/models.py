@@ -28,6 +28,7 @@ class CryptocurrencyHistory(Base):
     Crypto_Id = Column(String, nullable= False)
     Datetime_Local = Column(DateTime, nullable= False)
     Datetime_UTC = Column(DateTime, nullable= False)
+    Date_Local = Column(Date, nullable= False)
     Value = Column(Float, nullable= False)
     Previous_Value = Column(Float, nullable= False)
 
@@ -84,58 +85,33 @@ class FundHistory(Base):
     )
     is_view = False
 
+######### gold tables
+class IndexState(Base):
+    __tablename__ = 'IndexState'
 
+    Index_Type = Column(String, nullable= False)
+    Date_Local = Column(Date, nullable= False)
+    Latest_Value = Column(Float, nullable= False)
+    Daily_Rate_Of_Change = Column(Float, nullable= False)
+    Weekly_Rate_Of_Change = Column(Float, nullable= False)
+    Monthly_Rate_Of_Change = Column(Float, nullable= False)
 
-######### views
+    __table_args__ = (
+        PrimaryKeyConstraint('Index_Type', 'Date_Local'),
+    )
+    is_view = False
 
-class TotalIndex_view(Base):
-    stmt = select(
-        BourseHistory.Index_Type,
-        BourseHistory.Date_En,
-        BourseHistory.Value,
-        ((BourseHistory.Value - func.lag(BourseHistory.Value).over(order_by= BourseHistory.Date_En)) / func.lag(BourseHistory.Value).over(order_by= BourseHistory.Date_En)).label('daily_rate_of_change'),
-        ((BourseHistory.Value - func.lag(BourseHistory.Value, 7).over(order_by= BourseHistory.Date_En)) / func.lag(BourseHistory.Value, 7).over(order_by= BourseHistory.Date_En)).label('weekly_rate_of_change'),
-        ((BourseHistory.Value - func.lag(BourseHistory.Value, 30).over(order_by= BourseHistory.Date_En)) / func.lag(BourseHistory.Value, 30).over(order_by= BourseHistory.Date_En)).label('monthly_rate_of_change'),
-        ).where(BourseHistory.Index_Type == "total").order_by(BourseHistory.Date_En.desc()).limit(1)
-    is_view = True
-    __table__ = create_view(
-        name= 'TotalIndex_view', 
-        selectable= stmt, 
-        metadata= Base.metadata,
-        replace= True
-        )
+class CryptocurrencyState(Base):
+    __tablename__ = 'CryptocurrencyState'
 
-class WeightedIndex_view(Base):
-    stmt = select(
-        BourseHistory.Index_Type,
-        BourseHistory.Date_En,
-        BourseHistory.Value,
-        ((BourseHistory.Value - func.lag(BourseHistory.Value).over(order_by= BourseHistory.Date_En)) / func.lag(BourseHistory.Value).over(order_by= BourseHistory.Date_En)).label('daily_rate_of_change'),
-        ((BourseHistory.Value - func.lag(BourseHistory.Value, 7).over(order_by= BourseHistory.Date_En)) / func.lag(BourseHistory.Value, 7).over(order_by= BourseHistory.Date_En)).label('weekly_rate_of_change'),
-        ((BourseHistory.Value - func.lag(BourseHistory.Value, 30).over(order_by= BourseHistory.Date_En)) / func.lag(BourseHistory.Value, 30).over(order_by= BourseHistory.Date_En)).label('monthly_rate_of_change'),
-        ).where(BourseHistory.Index_Type == "weighted").order_by(BourseHistory.Date_En.desc()).limit(1)
-    is_view = True
-    __table__ = create_view(
-        name= 'WeightedIndex_view', 
-        selectable= stmt, 
-        metadata= Base.metadata,
-        replace= True
-        )
+    Crypto_Id = Column(String, nullable= False)
+    Date_Local = Column(Date, nullable= False)
+    Latest_Value = Column(Float, nullable= False)
+    Daily_Rate_Of_Change = Column(Float, nullable= False)
+    Weekly_Rate_Of_Change = Column(Float, nullable= False)
+    Monthly_Rate_Of_Change = Column(Float, nullable= False)
 
-# class Cryptocurrency_view(Base):
-#     stmt = select(
-#         CryptocurrencyHistory.Crypto_Type,
-#         CryptocurrencyHistory.Date_En,
-#         CryptocurrencyHistory.Value,
-#         ((CryptocurrencyHistory.Value - func.lag(CryptocurrencyHistory.Value).over(order_by= CryptocurrencyHistory.Date_En)) / func.lag(CryptocurrencyHistory.Value).over(order_by= CryptocurrencyHistory.Date_En)).label('daily_rate_of_change'),
-#         ((CryptocurrencyHistory.Value - func.lag(CryptocurrencyHistory.Value, 7).over(order_by= CryptocurrencyHistory.Date_En)) / func.lag(CryptocurrencyHistory.Value, 7).over(order_by= CryptocurrencyHistory.Date_En)).label('weekly_rate_of_change'),
-#         ((CryptocurrencyHistory.Value - func.lag(CryptocurrencyHistory.Value, 30).over(order_by= CryptocurrencyHistory.Date_En)) / func.lag(CryptocurrencyHistory.Value, 30).over(order_by= CryptocurrencyHistory.Date_En)).label('monthly_rate_of_change'),
-#         ).where(CryptocurrencyHistory.Crypto_Type == "bitcoin").order_by(CryptocurrencyHistory.Date_En.desc()).limit(1)
-#     is_view = True
-#     __table__ = create_view(
-#         name= 'Cryptocurrency_view', 
-#         selectable= stmt, 
-#         metadata= Base.metadata,
-#         replace= True
-#         )
-
+    __table_args__ = (
+        PrimaryKeyConstraint('Crypto_Id', 'Date_Local'),
+    )
+    is_view = False

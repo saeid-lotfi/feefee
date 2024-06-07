@@ -34,3 +34,7 @@ GET https://cdn.tsetmc.com/api/ClosingPrice/GetRelatedCompany/68
 # bourse fund history
 GET https://cdn.tsetmc.com/api/ClosingPrice/GetClosingPriceDailyList/{fund_id}/0
 ```
+
+## Issues:
+gaps when crawling exir -> some candles are missing
+teter "2024-06-06 11:30:00" utc 

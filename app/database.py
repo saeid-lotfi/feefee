@@ -8,12 +8,6 @@ from models import Base
 
 # set logger
 import logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-init_db_logger = logging.getLogger("InitDB")
-init_db_logger.addHandler(logging.FileHandler("/logs/init_db.log"))
-init_db_logger.propagate = False
 
 ####################
 # SQLALCHEMY_DATABASE_URL = "postgresql://username:password@localhost:5432/feefee"
@@ -30,6 +24,12 @@ def get_db():
         db.close()
 
 def init_db():
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    init_db_logger = logging.getLogger("InitDB")
+    init_db_logger.addHandler(logging.FileHandler("/logs/init_db.log"))
+    init_db_logger.propagate = False
 
     while True:
         try:
